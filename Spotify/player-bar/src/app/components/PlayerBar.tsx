@@ -23,7 +23,7 @@ import {
   VolumeHighIcon,
   VolumeMutedIcon,
 } from "../icons/icons";
-import { ToggleRepeatMusic } from "../@types/types";
+import { ToggleRepeatMusic } from "../../@types/types";
 
 const PlayerBar = () => {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
