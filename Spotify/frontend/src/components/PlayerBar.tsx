@@ -4,7 +4,6 @@ import Image from "next/image";
 import { musics } from "../app/data/musics";
 import {
   AddMusicIcon,
-  DevicesIcon,
   FullScreenIcon,
   LyricsIcon,
   MiniReaderIcon,
@@ -22,6 +21,7 @@ import {
   VolumeLowIcon,
   VolumeHighIcon,
   VolumeMutedIcon,
+  ConnectDeviceIcon,
 } from "../app/icons/icons";
 import { usePlayer } from "@/contexts/PlayerContext";
 
@@ -53,6 +53,7 @@ const PlayerBar = () => {
     volumeSliderRef,
     duration,
     music,
+    isHydrated,
   } = usePlayer();
 
   const cycleRepeatMode = () => {
@@ -317,40 +318,44 @@ const PlayerBar = () => {
       <div className="flex w-full h-full items-center">
         {/* Left - Music Info */}
         <div className="flex-1 text-center">
-          <div className="flex space-x-4">
-            <Image
-              src={music.photoUrl}
-              alt={"Music Image from artist " + music.artists.join(", ")}
-              width={56}
-              height={56}
-              className="rounded-sm"
-              priority={true}
-            />
-            <div className="flex flex-col justify-center items-start">
-              <h2 className="text-white text-sm tracking-tight cursor-pointer hover:underline">
-                {music.title}
-              </h2>
-              <div className="text-[#999999] text-xs flex items-center gap-1 tracking-tight cursor-pointer  ">
-                {music.hasVideoClipe && (
-                  <>
-                    <VideoclipeIcon className="h-3 w-3 text-[#b3b3b3] mr-1 " />
-                    <span className="hover:underline hover:text-[#ebebeb]">
-                      Videoclipe
-                    </span>
-                    <span>•</span>
-                  </>
-                )}
-                <p className="hover:underline hover:text-[#ebebeb]">
-                  {music.artists.join(", ")}
-                </p>
+          {isHydrated && (
+            <div className="flex space-x-4">
+              <Image
+                src={music.photoUrl}
+                alt={"Music image cover"}
+                width={56}
+                height={56}
+                className="rounded-sm"
+                priority={true}
+              />
+
+              <div className="flex flex-col justify-center items-start">
+                <h2 className="text-white text-sm tracking-tight cursor-pointer hover:underline">
+                  {music.title}
+                </h2>
+                <div className="text-[#999999] text-xs flex items-center gap-1 tracking-tight cursor-pointer  ">
+                  {music.hasVideoClipe && (
+                    <>
+                      <VideoclipeIcon className="h-3 w-3 text-[#b3b3b3] mr-1 " />
+                      <span className="hover:underline hover:text-[#ebebeb]">
+                        Videoclipe
+                      </span>
+                      <span>•</span>
+                    </>
+                  )}
+                  <p className="hover:underline hover:text-[#ebebeb]">
+                    {music.artists.join(", ")}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center">
+                <button>
+                  <AddMusicIcon className="h-4 w-4 text-[#b3b3b3] hover:text-white transition-colors" />
+                </button>
               </div>
             </div>
-            <div className="flex items-center">
-              <button>
-                <AddMusicIcon className="h-4 w-4 text-[#b3b3b3] hover:text-white transition-colors" />
-              </button>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Center - Player Controls */}
@@ -361,70 +366,98 @@ const PlayerBar = () => {
               onClick={() => setIsShuffleEnabled(!isShuffleEnabled)}
               className="hover:text-white transition-colors"
             >
-              <ShuffleMusicIcon
-                className={`h-4 w-4 ${
-                  isShuffleEnabled ? "text-[#1ed760]" : "text-[#b3b3b3]"
-                }`}
-              />
+              {!isHydrated && (
+                <ShuffleMusicIcon
+                  className={`h-4 w-4 
+            text-[#2a2a2a] 
+              `}
+                />
+              )}
+              {isHydrated && (
+                <ShuffleMusicIcon
+                  className={`h-4 w-4 ${
+                    isShuffleEnabled ? "text-[#1ed760]" : "text-[#b3b3b3]"
+                  }`}
+                />
+              )}
+
               {isShuffleEnabled && (
                 <div className="items-center flex justify-center">
                   <span className="fixed mt-2 text-[#1ed760]">•</span>
                 </div>
               )}
             </button>
-            <button
-              onClick={goPrevious}
-              className="hover:text-white transition-colors"
-            >
-              <PreviousMusicIcon className="h-4 w-4 text-[#b3b3b3]" />
+            <button onClick={goPrevious}>
+              <PreviousMusicIcon
+                className={`h-4 w-4 ${
+                  isHydrated ? "text-[#b3b3b3]" : "text-[#2a2a2a]"
+                }`}
+              />
             </button>
-            <button
-              className="bg-white rounded-full w-8 h-8 items-center flex justify-center hover:scale-105 transition-transform"
-              onClick={() => setIsMusicPlaying(!isMusicPlaying)}
-            >
-              {isMusicPlaying ? (
+            {isHydrated && (
+              <button
+                className="bg-white rounded-full w-8 h-8 items-center flex justify-center hover:scale-105 transition-transform"
+                onClick={() => setIsMusicPlaying(!isMusicPlaying)}
+              >
+                {isMusicPlaying ? (
+                  <StopMusicIcon className="h-4 w-4 text-black" />
+                ) : (
+                  <StartMusicIcon className="h-4 w-4 text-black" />
+                )}
+              </button>
+            )}
+            {!isHydrated && (
+              <button className="bg-[#4d4d4d] rounded-full w-8 h-8 items-center flex justify-center ">
                 <StopMusicIcon className="h-4 w-4 text-black" />
-              ) : (
-                <StartMusicIcon className="h-4 w-4 text-black" />
-              )}
+              </button>
+            )}
+            <button onClick={goNext}>
+              <NextMusicIcon
+                className={`h-4 w-4 ${
+                  isHydrated ? "text-[#b3b3b3]" : "text-[#2a2a2a]"
+                }`}
+              />
             </button>
-            <button
-              onClick={goNext}
-              className="hover:text-white transition-colors"
-            >
-              <NextMusicIcon className="h-4 w-4 text-[#b3b3b3]" />
-            </button>
-            <button
-              onClick={cycleRepeatMode}
-              className="hover:text-white transition-colors"
-            >
-              {shuffleState.on ? (
-                <>
-                  <RepeatMusicIcon className="h-4 w-4 text-[#1ed760]" />
-                  <div className="items-center flex justify-center">
-                    <span className="fixed mt-2 text-[#1ed760]">•</span>
-                  </div>
-                </>
-              ) : shuffleState.off ? (
-                <RepeatMusicIcon className="h-4 w-4 text-[#b3b3b3]" />
-              ) : (
-                <>
-                  <RepeatOneTimeMusicIcon className="h-4 w-4 text-[#1ed760]" />
-                  <div className="items-center flex justify-center">
-                    <span className="fixed mt-2 text-[#1ed760]">•</span>
-                  </div>
-                </>
-              )}
-            </button>
+            {isHydrated && (
+              <button onClick={cycleRepeatMode}>
+                {shuffleState.on ? (
+                  <>
+                    <RepeatMusicIcon className="h-4 w-4 text-[#1ed760]" />
+                    <div className="items-center flex justify-center">
+                      <span className="fixed mt-2 text-[#1ed760]">•</span>
+                    </div>
+                  </>
+                ) : shuffleState.off ? (
+                  <RepeatMusicIcon className="h-4 w-4 text-[#b3b3b3]" />
+                ) : (
+                  <>
+                    <RepeatOneTimeMusicIcon className="h-4 w-4 text-[#1ed760]" />
+                    <div className="items-center flex justify-center">
+                      <span className="fixed mt-2 text-[#1ed760]">•</span>
+                    </div>
+                  </>
+                )}
+              </button>
+            )}
+            {!isHydrated && (
+              <button>
+                <RepeatMusicIcon className="h-4 w-4 text-[#2a2a2a]" />
+              </button>
+            )}
           </div>
 
-          {/* Progress Bar - FIXED */}
+          {/* Progress Bar  */}
           <div className="text-[#b3b3b3] flex items-center justify-between mt-2 text-xs w-full">
-            <div className="w-10 text-right">{formatTime(currentTime)}</div>
+            <div className="w-10 text-right">
+              {" "}
+              {isHydrated ? formatTime(currentTime) : "-:--"}
+            </div>
 
             <div
               ref={progressBarRef}
-              className="group relative mx-2 h-1 bg-white/30 rounded flex-1 cursor-pointer hover:h-1"
+              className={`group relative mx-2 h-1 ${
+                isHydrated ? " bg-[#4c4c4c]" : " bg-[#4d4d4d]"
+              } rounded flex-1 cursor-pointer hover:h-1`}
               onMouseDown={handleMouseDown}
               onClick={handleProgressBarClick}
             >
@@ -446,23 +479,32 @@ const PlayerBar = () => {
               </div>
             </div>
 
-            <div className="w-10 text-left">{formatTime(duration)}</div>
+            <div className="w-10 text-left">
+              {isHydrated ? formatTime(duration) : "-:--"}
+            </div>
           </div>
         </div>
 
         {/* Right - Reserved */}
         <div className="flex-1 text-center text-white gap-4 flex items-center justify-end">
           <button>
-            <PlayBackViewIcon className="h-4 w-4 text-[#b3b3b3]" />
+            <PlayBackViewIcon
+              className={`h-4 w-4 ${
+                isHydrated ? "text-[#b3b3b3]" : "text-[#2a2a2a]"
+              }`}
+            />
           </button>
-          <button>
-            <LyricsIcon className="h-4 w-4 text-[#b3b3b3]" />
-          </button>
+          {isHydrated && (
+            <button>
+              <LyricsIcon className="h-4 w-4 text-[#b3b3b3]" />
+            </button>
+          )}
+
           <button>
             <QueueIcon className="h-4 w-4 text-[#b3b3b3]" />
           </button>
           <button>
-            <DevicesIcon className="h-4 w-4 text-[#b3b3b3]" />
+            <ConnectDeviceIcon className="h-4 w-4 text-[#b3b3b3]" />
           </button>
 
           {/* Fixed Volume Module */}
@@ -495,11 +537,17 @@ const PlayerBar = () => {
             </div>
           </div>
 
+          {isHydrated && (
+            <button>
+              <MiniReaderIcon className="h-4 w-4 text-[#b3b3b3]" />
+            </button>
+          )}
           <button>
-            <MiniReaderIcon className="h-4 w-4 text-[#b3b3b3]" />
-          </button>
-          <button>
-            <FullScreenIcon className="h-4 w-4 text-[#b3b3b3]" />
+            <FullScreenIcon
+              className={`h-4 w-4 ${
+                isHydrated ? "text-[#b3b3b3]" : "text-[#2a2a2a]"
+              }`}
+            />
           </button>
         </div>
       </div>

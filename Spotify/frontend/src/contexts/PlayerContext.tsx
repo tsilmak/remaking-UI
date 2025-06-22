@@ -37,6 +37,7 @@ interface PlayerContextProps {
   volumeSliderRef: React.RefObject<HTMLDivElement | null>;
   duration: number;
   music: (typeof musics)[number];
+  isHydrated: boolean;
 }
 
 const PlayerContext = createContext<PlayerContextProps | undefined>(undefined);
@@ -79,7 +80,43 @@ function usePersistedState<T>(
   return [state, setState];
 }
 
+// Custom hook for persisted current time with throttling
+function usePersistedCurrentTime(): [
+  number,
+  React.Dispatch<React.SetStateAction<number>>
+] {
+  const [currentTime, setCurrentTime] = usePersistedState(
+    "musicPlayer_currentTime",
+    0
+  );
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Create a throttled setter that only persists every 2 seconds
+  const setCurrentTimeThrottled = React.useCallback(
+    (value: React.SetStateAction<number>) => {
+      setCurrentTime(value);
+
+      // Clear existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      // Set new timeout to persist after 2 seconds of no updates
+      timeoutRef.current = setTimeout(() => {
+        const newValue =
+          typeof value === "function" ? value(currentTime) : value;
+        setStoredValue("musicPlayer_currentTime", newValue);
+      }, 2000);
+    },
+    [currentTime, setCurrentTime]
+  );
+
+  return [currentTime, setCurrentTimeThrottled];
+}
+
 export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
+  const [isHydrated, setIsHydrated] = useState(false);
+
   // Persisted states
   const [currentIndex, setCurrentIndex] = usePersistedState(
     "musicPlayer_currentIndex",
@@ -101,15 +138,22 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
       onetime: false,
     }
   );
-  const [volume, setVolume] = usePersistedState("musicPlayer_volume", 50);
+  const [volume, setVolume] = usePersistedState("musicPlayer_volume", 100);
   const [previousVolume, setPreviousVolume] = usePersistedState(
     "musicPlayer_previousVolume",
-    50
+    100
   );
   const [isMuted, setIsMuted] = usePersistedState("musicPlayer_isMuted", false);
 
-  // Non-persisted states (these should reset on page refresh)
-  const [currentTime, setCurrentTime] = useState(0);
+  // Persisted current time with throttling to avoid too frequent localStorage writes
+  const [currentTime, setCurrentTime] = usePersistedCurrentTime();
+
+  // Track the current song to reset time when song changes
+  const [lastSongIndex, setLastSongIndex] = usePersistedState(
+    "musicPlayer_lastSongIndex",
+    0
+  );
+
   const [duration, setDuration] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isVolumeDragging, setIsVolumeDragging] = useState(false);
@@ -120,6 +164,37 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
 
   const music = musics[currentIndex];
 
+  // Reset current time when song changes
+  useEffect(() => {
+    if (currentIndex !== lastSongIndex) {
+      setCurrentTime(0);
+      setLastSongIndex(currentIndex);
+    }
+  }, [currentIndex, lastSongIndex, setCurrentTime, setLastSongIndex]);
+
+  // Initialize audio with persisted current time when audio loads
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleLoadedMetadata = () => {
+      // Only set persisted time if it's for the same song and within bounds
+      if (
+        currentIndex === lastSongIndex &&
+        currentTime > 0 &&
+        currentTime < audio.duration
+      ) {
+        audio.currentTime = currentTime;
+      }
+    };
+
+    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+
+    return () => {
+      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+    };
+  }, [currentIndex, lastSongIndex, currentTime]);
+
   // Stop music on page load if it was playing (optional - you might want to auto-resume)
   useEffect(() => {
     if (isMusicPlaying) {
@@ -128,9 +203,21 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount
 
+  // Enhanced setCurrentIndex that resets time
+  const setCurrentIndexWithTimeReset = React.useCallback(
+    (value: React.SetStateAction<number>) => {
+      setCurrentIndex(value);
+      setCurrentTime(0);
+    },
+    [setCurrentIndex, setCurrentTime]
+  );
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
   const contextValue: PlayerContextProps = {
     currentIndex,
-    setCurrentIndex,
+    setCurrentIndex: setCurrentIndexWithTimeReset,
     isMusicPlaying,
     setIsMusicPlaying,
     isShuffleEnabled,
@@ -155,6 +242,7 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     volumeSliderRef,
     music,
     duration,
+    isHydrated,
   };
 
   return (
