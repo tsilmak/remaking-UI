@@ -1,5 +1,5 @@
 import React from "react";
-import PlayerBar from "../components/PlayerBar";
+import PlayerBar from "@/components/playerBar/PlayerBar";
 
 export const metadata = {
   title: "Spotify - Web Player: Music for Everyone",

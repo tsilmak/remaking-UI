@@ -1,5 +1,5 @@
 import React from "react";
-import PlayerBar from "@/components/PlayerBar";
+import PlayerBar from "@/components/playerBar/PlayerBar";
 
 const page = () => {
   return (

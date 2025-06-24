@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect } from "react";
 import Image from "next/image";
-import { musics } from "../app/data/musics";
+import { musics } from "@/app/data/musics";
 import {
   AddMusicIcon,
   FullScreenIcon,
@@ -22,10 +22,13 @@ import {
   VolumeHighIcon,
   VolumeMutedIcon,
   ConnectDeviceIcon,
-} from "../app/icons/icons";
+} from "@/components/icons/icons";
 import { usePlayer } from "@/contexts/PlayerContext";
-
+import ToolTip from "./ToolTip";
 const PlayerBar = () => {
+  // This state is used to scale down the button when clicked
+  const [isButtonClicked, setIsButtonClicked] = React.useState(false);
+
   const {
     currentIndex,
     setCurrentIndex,
@@ -387,57 +390,100 @@ const PlayerBar = () => {
                 </div>
               )}
             </button>
-            <button onClick={goPrevious}>
-              <PreviousMusicIcon
-                className={`h-4 w-4 ${
-                  isHydrated ? "text-[#b3b3b3]" : "text-[#2a2a2a]"
-                }`}
-              />
-            </button>
+            {isHydrated ? (
+              <ToolTip text="Previous">
+                <button
+                  onClick={goPrevious}
+                  className={
+                    "hover:scale-105 transition-transform items-center flex justify-center cursor-pointer"
+                  }
+                >
+                  <PreviousMusicIcon
+                    className={
+                      "h-4 w-4 text-[#b3b3b3] hover:text-[#ebebeb] hover-scale-105 transition-colors"
+                    }
+                  />
+                </button>
+              </ToolTip>
+            ) : (
+              <PreviousMusicIcon className="h-4 w-4 text-[#2a2a2a]" />
+            )}
+
             {isHydrated && (
-              <button
-                className="bg-white rounded-full w-8 h-8 items-center flex justify-center hover:scale-105 transition-transform"
-                onClick={() => setIsMusicPlaying(!isMusicPlaying)}
-              >
-                {isMusicPlaying ? (
-                  <StopMusicIcon className="h-4 w-4 text-black" />
-                ) : (
-                  <StartMusicIcon className="h-4 w-4 text-black" />
-                )}
-              </button>
+              <ToolTip text={`${isMusicPlaying ? "Pause" : "Play"}`}>
+                <button
+                  className="bg-white rounded-full w-8 h-8 flex items-center justify-center hover:scale-105 hover:bg-[#ebebeb] cursor-pointer transition-transform active:scale-95 active:bg-[#b3b3b3]"
+                  onClick={() => setIsMusicPlaying(!isMusicPlaying)}
+                >
+                  {isMusicPlaying ? (
+                    <StopMusicIcon className="h-4 w-4 text-black" />
+                  ) : (
+                    <StartMusicIcon className="h-4 w-4 text-black" />
+                  )}
+                </button>
+              </ToolTip>
             )}
             {!isHydrated && (
               <button className="bg-[#4d4d4d] rounded-full w-8 h-8 items-center flex justify-center ">
                 <StopMusicIcon className="h-4 w-4 text-black" />
               </button>
             )}
-            <button onClick={goNext}>
-              <NextMusicIcon
-                className={`h-4 w-4 ${
-                  isHydrated ? "text-[#b3b3b3]" : "text-[#2a2a2a]"
-                }`}
-              />
-            </button>
-            {isHydrated && (
-              <button onClick={cycleRepeatMode}>
-                {shuffleState.on ? (
-                  <>
-                    <RepeatMusicIcon className="h-4 w-4 text-[#1ed760]" />
-                    <div className="items-center flex justify-center">
-                      <span className="fixed mt-2 text-[#1ed760]">•</span>
-                    </div>
-                  </>
-                ) : shuffleState.off ? (
-                  <RepeatMusicIcon className="h-4 w-4 text-[#b3b3b3]" />
-                ) : (
-                  <>
-                    <RepeatOneTimeMusicIcon className="h-4 w-4 text-[#1ed760]" />
-                    <div className="items-center flex justify-center">
-                      <span className="fixed mt-2 text-[#1ed760]">•</span>
-                    </div>
-                  </>
-                )}
+            {isHydrated ? (
+              <ToolTip text="Next">
+                <button
+                  onClick={goNext}
+                  className={
+                    "hover:scale-105 transition-transform items-center flex justify-center cursor-pointer"
+                  }
+                >
+                  <NextMusicIcon
+                    className={
+                      "h-4 w-4 text-[#b3b3b3] hover:text-[#ebebeb] hover-scale-105 transition-colors"
+                    }
+                  />
+                </button>
+              </ToolTip>
+            ) : (
+              <button>
+                <NextMusicIcon className={`h-4 w-4 text-[#2a2a2a]`} />
               </button>
+            )}
+
+            {isHydrated && (
+              <ToolTip
+                text={`${
+                  shuffleState.on
+                    ? "Enable repeat one "
+                    : shuffleState.off
+                    ? "Enable repeat"
+                    : "Disable repeat"
+                } `}
+              >
+                <button
+                  onClick={cycleRepeatMode}
+                  className={
+                    "hover:scale-105 transition-transform items-center flex justify-center cursor-pointer"
+                  }
+                >
+                  {shuffleState.on ? (
+                    <>
+                      <RepeatMusicIcon className="h-4 w-4 text-[#1ed760]" />
+                      <div className="items-center flex justify-center">
+                        <span className="fixed mt-2 text-[#1ed760]">•</span>
+                      </div>
+                    </>
+                  ) : shuffleState.off ? (
+                    <RepeatMusicIcon className="h-4 w-4 text-[#b3b3b3]" />
+                  ) : (
+                    <>
+                      <RepeatOneTimeMusicIcon className="h-4 w-4 text-[#1ed760]" />
+                      <div className="items-center flex justify-center">
+                        <span className="fixed mt-2 text-[#1ed760]">•</span>
+                      </div>
+                    </>
+                  )}
+                </button>
+              </ToolTip>
             )}
             {!isHydrated && (
               <button>
@@ -449,7 +495,6 @@ const PlayerBar = () => {
           {/* Progress Bar  */}
           <div className="text-[#b3b3b3] flex items-center justify-between mt-2 text-xs w-full">
             <div className="w-10 text-right">
-              {" "}
               {isHydrated ? formatTime(currentTime) : "-:--"}
             </div>
 
@@ -462,7 +507,7 @@ const PlayerBar = () => {
               onClick={handleProgressBarClick}
             >
               {/* Background track - this makes the entire area hoverable */}
-              <div className="absolute inset-0 h-1 bg-white/30 rounded group-hover:bg-white/40 transition-colors" />
+              <div className="absolute inset-0 h-1 bg-[#4d4d4d] rounded  transition-colors" />
 
               {/* Progress fill */}
               <div
