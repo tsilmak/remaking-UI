@@ -26,9 +26,6 @@ import {
 import { usePlayer } from "@/contexts/PlayerContext";
 import ToolTip from "./ToolTip";
 const PlayerBar = () => {
-  // This state is used to scale down the button when clicked
-  const [isButtonClicked, setIsButtonClicked] = React.useState(false);
-
   const {
     currentIndex,
     setCurrentIndex,
