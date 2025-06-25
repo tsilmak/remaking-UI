@@ -362,44 +362,43 @@ const PlayerBar = () => {
         <div className="flex-1 text-center px-2 py-2">
           {/* Controls */}
           <div className="flex items-center justify-center space-x-6">
-            <button
-              onClick={() => setIsShuffleEnabled(!isShuffleEnabled)}
-              className="hover:text-white transition-colors"
-            >
-              {!isHydrated && (
-                <ShuffleMusicIcon
-                  className={`h-4 w-4 
-            text-[#2a2a2a] 
-              `}
-                />
-              )}
-              {isHydrated && (
-                <ShuffleMusicIcon
-                  className={`h-4 w-4 ${
-                    isShuffleEnabled ? "text-[#1ed760]" : "text-[#b3b3b3]"
+            {isHydrated && (
+              <ToolTip
+                text={`${
+                  isShuffleEnabled ? "Disable Shuffle" : "Enable Shuffle"
+                }`}
+              >
+                <button
+                  onClick={() => setIsShuffleEnabled(!isShuffleEnabled)}
+                  className={`hover:scale-105 transition-transform items-center flex justify-center cursor-pointer active:scale-95  ${
+                    isShuffleEnabled
+                      ? "text-[#1ed760] active:text-[#159743]"
+                      : "text-[#b3b3b3] active:text-[#b3b3b3] hover:text-[#e5e5e5]"
                   }`}
-                />
-              )}
+                >
+                  <ShuffleMusicIcon className="h-4 w-4" />
+                  {isShuffleEnabled && (
+                    <span className="absolute top-full mt-1 h-0 flex justify-center items-center ">
+                      •
+                    </span>
+                  )}
+                </button>
+              </ToolTip>
+            )}
 
-              {isShuffleEnabled && (
-                <div className="items-center flex justify-center">
-                  <span className="fixed mt-2 text-[#1ed760]">•</span>
-                </div>
-              )}
-            </button>
+            {!isHydrated && (
+              <ShuffleMusicIcon className={`h-4 w-4 text-[#2a2a2a]`} />
+            )}
+
             {isHydrated ? (
               <ToolTip text="Previous">
                 <button
                   onClick={goPrevious}
                   className={
-                    "hover:scale-105 transition-transform items-center flex justify-center cursor-pointer"
+                    "hover:scale-105 transition-transform items-center flex justify-center cursor-pointer  active:scale-95 text-[#b3b3b3] hover:text-[#ebebeb] active:text-[#b3b3b3]"
                   }
                 >
-                  <PreviousMusicIcon
-                    className={
-                      "h-4 w-4 text-[#b3b3b3] hover:text-[#ebebeb] hover-scale-105 transition-colors"
-                    }
-                  />
+                  <PreviousMusicIcon className={"h-4 w-4"} />
                 </button>
               </ToolTip>
             ) : (
@@ -409,20 +408,20 @@ const PlayerBar = () => {
             {isHydrated && (
               <ToolTip text={`${isMusicPlaying ? "Pause" : "Play"}`}>
                 <button
-                  className="bg-white rounded-full w-8 h-8 flex items-center justify-center hover:scale-105 hover:bg-[#ebebeb] cursor-pointer transition-transform active:scale-95 active:bg-[#b3b3b3]"
+                  className="bg-white rounded-full w-8 h-8 flex items-center justify-center hover:scale-105 hover:bg-[#ebebeb] cursor-pointer transition-transform active:scale-95 text-black active:bg-[#b3b3b3]"
                   onClick={() => setIsMusicPlaying(!isMusicPlaying)}
                 >
                   {isMusicPlaying ? (
-                    <StopMusicIcon className="h-4 w-4 text-black" />
+                    <StopMusicIcon className="h-4 w-4" />
                   ) : (
-                    <StartMusicIcon className="h-4 w-4 text-black" />
+                    <StartMusicIcon className="h-4 w-4" />
                   )}
                 </button>
               </ToolTip>
             )}
             {!isHydrated && (
-              <button className="bg-[#4d4d4d] rounded-full w-8 h-8 items-center flex justify-center ">
-                <StopMusicIcon className="h-4 w-4 text-black" />
+              <button className="bg-[#4d4d4d] rounded-full w-8 h-8 items-center flex justify-center text-black">
+                <StopMusicIcon className="h-4 w-4" />
               </button>
             )}
             {isHydrated ? (
@@ -430,14 +429,10 @@ const PlayerBar = () => {
                 <button
                   onClick={goNext}
                   className={
-                    "hover:scale-105 transition-transform items-center flex justify-center cursor-pointer"
+                    "hover:scale-105 transition-transform items-center flex justify-center cursor-pointer  active:scale-95 active:text-[#b3b3b3] text-[#b3b3b3] hover:text-[#ebebeb] hover-scale-105 "
                   }
                 >
-                  <NextMusicIcon
-                    className={
-                      "h-4 w-4 text-[#b3b3b3] hover:text-[#ebebeb] hover-scale-105 transition-colors"
-                    }
-                  />
+                  <NextMusicIcon className="h-4 w-4" />
                 </button>
               </ToolTip>
             ) : (
@@ -458,25 +453,27 @@ const PlayerBar = () => {
               >
                 <button
                   onClick={cycleRepeatMode}
-                  className={
-                    "hover:scale-105 transition-transform items-center flex justify-center cursor-pointer"
-                  }
+                  className={`hover:scale-105 transition-transform items-center flex justify-center cursor-pointer active:scale-95 ${
+                    shuffleState.on || shuffleState.onetime
+                      ? "text-[#1ed760] active:text-[#159743]"
+                      : "active:text-[#b3b3b3] text-[#b3b3b3]"
+                  }`}
                 >
                   {shuffleState.on ? (
                     <>
-                      <RepeatMusicIcon className="h-4 w-4 text-[#1ed760]" />
-                      <div className="items-center flex justify-center">
-                        <span className="fixed mt-2 text-[#1ed760]">•</span>
-                      </div>
+                      <RepeatMusicIcon className="h-4 w-4" />
+                      <span className="absolute top-full mt-1 h-0 flex justify-center items-center">
+                        •
+                      </span>
                     </>
                   ) : shuffleState.off ? (
-                    <RepeatMusicIcon className="h-4 w-4 text-[#b3b3b3]" />
+                    <RepeatMusicIcon className="h-4 w-4" />
                   ) : (
                     <>
-                      <RepeatOneTimeMusicIcon className="h-4 w-4 text-[#1ed760]" />
-                      <div className="items-center flex justify-center">
-                        <span className="fixed mt-2 text-[#1ed760]">•</span>
-                      </div>
+                      <RepeatOneTimeMusicIcon className="h-4 w-4" />
+                      <span className="absolute top-full mt-1 h-0 flex justify-center items-center">
+                        •
+                      </span>
                     </>
                   )}
                 </button>
@@ -527,7 +524,7 @@ const PlayerBar = () => {
           </div>
         </div>
 
-        {/* Right - Reserved */}
+        {/* Right - Volume and miscelncs */}
         <div className="flex-1 text-center text-white gap-4 flex items-center justify-end">
           <button>
             <PlayBackViewIcon
@@ -553,9 +550,9 @@ const PlayerBar = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={toggleMute}
-              className="hover:text-white transition-colors"
+              className="hover:text-white transition-colors cursor-pointer  active:scale-95 "
             >
-              <VolumeIcon className="h-4 w-4 text-[#b3b3b3] hover:text-white" />
+              <VolumeIcon className="h-4 w-4 text-[#b3b3b3] hover:text-white active:text-[#b3b3b3]" />
             </button>
 
             <div className="flex items-center">
