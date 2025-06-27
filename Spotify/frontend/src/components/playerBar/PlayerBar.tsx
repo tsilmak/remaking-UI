@@ -25,6 +25,7 @@ import {
 } from "@/components/icons/icons";
 import { usePlayer } from "@/contexts/PlayerContext";
 import ToolTip from "./ToolTip";
+
 const PlayerBar = () => {
   const {
     currentIndex,
@@ -56,6 +57,9 @@ const PlayerBar = () => {
     isHydrated,
   } = usePlayer();
 
+  // Add state for drag preview time
+  const [dragPreviewTime, setDragPreviewTime] = React.useState(0);
+
   const cycleRepeatMode = () => {
     setShuffleState((prev) => {
       if (prev.on) return { on: false, onetime: true, off: false };
@@ -81,6 +85,23 @@ const PlayerBar = () => {
       .padStart(2, "0");
     return `${minutes}:${seconds}`;
   };
+
+  const calculateTimeFromMouse = React.useCallback(
+    (e: MouseEvent | React.MouseEvent<HTMLDivElement>) => {
+      if (!progressBarRef.current || !audioRef.current) return null;
+
+      const audioDuration = audioRef.current.duration;
+      if (!audioDuration || isNaN(audioDuration)) return null;
+
+      const rect = progressBarRef.current.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+      const newTime = percentage * audioDuration;
+
+      return newTime;
+    },
+    [audioRef, progressBarRef]
+  );
 
   const updateProgressFromMouse = React.useCallback(
     (e: MouseEvent | React.MouseEvent<HTMLDivElement>) => {
@@ -120,21 +141,42 @@ const PlayerBar = () => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
-    updateProgressFromMouse(e);
+
+    // Calculate initial drag preview time
+    const previewTime = calculateTimeFromMouse(e);
+    if (previewTime !== null) {
+      setDragPreviewTime(previewTime);
+    }
   };
 
   const handleMouseMove = React.useCallback(
     (e: MouseEvent) => {
       if (!isDragging) return;
       e.preventDefault();
-      updateProgressFromMouse(e);
+
+      // Only update preview time during drag, don't seek the audio
+      const previewTime = calculateTimeFromMouse(e);
+      if (previewTime !== null) {
+        setDragPreviewTime(previewTime);
+      }
     },
-    [isDragging, updateProgressFromMouse]
+    [isDragging, calculateTimeFromMouse]
   );
 
   const handleMouseUp = React.useCallback(() => {
+    if (isDragging) {
+      // Now actually seek to the dragged position
+      if (audioRef.current && audioRef.current.readyState >= 2) {
+        try {
+          audioRef.current.currentTime = dragPreviewTime;
+          setCurrentTime(dragPreviewTime);
+        } catch (error) {
+          console.error("Failed to seek:", error);
+        }
+      }
+    }
     setIsDragging(false);
-  }, [setIsDragging]);
+  }, [isDragging, dragPreviewTime, audioRef, setCurrentTime, setIsDragging]);
 
   const handleVolumeChange = React.useCallback(
     (newVolume: number) => {
@@ -306,9 +348,9 @@ const PlayerBar = () => {
     }
   }, [isMusicPlaying, currentIndex, volume, audioRef]);
 
-  // Use duration from context state instead of audioRef for consistency
-  const progressPercent = duration ? (currentTime / duration) * 100 : 0;
-  console.log(duration);
+  // Calculate progress percentage - use dragPreviewTime during dragging
+  const displayTime = isDragging ? dragPreviewTime : currentTime;
+  const progressPercent = duration ? (displayTime / duration) * 100 : 0;
   const VolumeIcon = getVolumeIcon();
 
   return (
@@ -443,38 +485,36 @@ const PlayerBar = () => {
 
             {isHydrated && (
               <ToolTip
-                text={`${
+                text={
                   shuffleState.on
-                    ? "Enable repeat one "
+                    ? "Enable repeat one"
                     : shuffleState.off
                     ? "Enable repeat"
                     : "Disable repeat"
-                } `}
+                }
               >
                 <button
                   onClick={cycleRepeatMode}
-                  className={`hover:scale-105 transition-transform items-center flex justify-center cursor-pointer active:scale-95 ${
-                    shuffleState.on || shuffleState.onetime
-                      ? "text-[#1ed760] active:text-[#159743]"
-                      : "active:text-[#b3b3b3] text-[#b3b3b3]"
-                  }`}
+                  className={`
+      relative flex items-center justify-center
+      hover:scale-105 active:scale-95 transition-transform
+      ${
+        shuffleState.on || shuffleState.onetime
+          ? "text-[#1ed760] active:text-[#159743]"
+          : "text-[#b3b3b3] active:text-[#b3b3b3]"
+      }
+    `}
                 >
-                  {shuffleState.on ? (
-                    <>
-                      <RepeatMusicIcon className="h-4 w-4" />
-                      <span className="absolute top-full mt-1 h-0 flex justify-center items-center">
-                        •
-                      </span>
-                    </>
-                  ) : shuffleState.off ? (
-                    <RepeatMusicIcon className="h-4 w-4" />
+                  {shuffleState.onetime ? (
+                    <RepeatOneTimeMusicIcon className="h-4 w-4" />
                   ) : (
-                    <>
-                      <RepeatOneTimeMusicIcon className="h-4 w-4" />
-                      <span className="absolute top-full mt-1 h-0 flex justify-center items-center">
-                        •
-                      </span>
-                    </>
+                    <RepeatMusicIcon className="h-4 w-4" />
+                  )}
+
+                  {(shuffleState.on || shuffleState.onetime) && (
+                    <span className="absolute top-full mt-1 h-0 flex justify-center items-center ">
+                      •
+                    </span>
                   )}
                 </button>
               </ToolTip>
@@ -489,7 +529,7 @@ const PlayerBar = () => {
           {/* Progress Bar  */}
           <div className="text-[#b3b3b3] flex items-center justify-between mt-2 text-xs w-full">
             <div className="w-10 text-right">
-              {isHydrated ? formatTime(currentTime) : "-:--"}
+              {isHydrated ? formatTime(displayTime) : "-:--"}
             </div>
 
             <div
@@ -501,11 +541,13 @@ const PlayerBar = () => {
               onClick={handleProgressBarClick}
             >
               {/* Background track - this makes the entire area hoverable */}
-              <div className="absolute inset-0 h-1 bg-[#4d4d4d] rounded  transition-colors" />
+              <div className="absolute inset-0 h-1 bg-[#4d4d4d] rounded transition-colors" />
 
               {/* Progress fill */}
               <div
-                className="absolute top-0 left-0 h-1 bg-white group-hover:bg-[#1ed760] rounded transition-colors"
+                className={`absolute top-0 left-0 h-1  group-hover:bg-[#1ed760] rounded transition-color ${
+                  isDragging ? "bg-[#1ed760]" : "bg-white"
+                }`}
                 style={{ width: `${progressPercent}%` }}
               >
                 {/* Progress handle/thumb */}
@@ -546,14 +588,16 @@ const PlayerBar = () => {
             <ConnectDeviceIcon className="h-4 w-4 text-[#b3b3b3]" />
           </button>
 
-          {/* Fixed Volume Module */}
+          {/* Volume Module */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={toggleMute}
-              className="hover:text-white transition-colors cursor-pointer  active:scale-95 "
-            >
-              <VolumeIcon className="h-4 w-4 text-[#b3b3b3] hover:text-white active:text-[#b3b3b3]" />
-            </button>
+            <ToolTip text={`${isMuted ? "Unmute" : "Mute"}`}>
+              <button
+                onClick={toggleMute}
+                className="hover:text-white transition-colors cursor-pointer  active:scale-95 "
+              >
+                <VolumeIcon className="h-4 w-4 text-[#b3b3b3] hover:text-white active:text-[#b3b3b3]" />
+              </button>
+            </ToolTip>
 
             <div className="flex items-center">
               <div
@@ -562,7 +606,9 @@ const PlayerBar = () => {
                 onMouseDown={handleVolumeMouseDown}
               >
                 <div
-                  className="absolute top-0 left-0 h-1 bg-white hover:bg-[#1ed760] rounded"
+                  className={`absolute top-0 left-0 h-1 ${
+                    isVolumeDragging ? "bg-[#1ed760]" : "bg-white"
+                  }  hover:bg-[#1ed760] rounded`}
                   style={{ width: `${volume}%` }}
                 >
                   <div
