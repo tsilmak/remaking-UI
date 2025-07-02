@@ -672,10 +672,25 @@ const PlayerBar = () => {
             </button>
           </ToolTip>
           {isHydrated && (
-            <ToolTip text="Lyrics">
+            <ToolTip text="Lyrics" showTooltip={music.hasLyrics}>
               <button
-                onClick={() => setIsPlayingLyrics(!isPlayingLyrics)}
-                className={`relative flex items-center justify-center hover:scale-105 active:scale-95 transition-transform cursor-pointer  ${isPlayingLyrics ? "text-[#1ed760] active:text-[#159743]" : "text-[#b3b3b3] active:text-[#7e7e7e] hover:text-white"}`}
+                onClick={() => {
+                  if (music.hasLyrics) {
+                    setIsPlayingLyrics(!isPlayingLyrics);
+                  }
+                }}
+                className={`
+  relative flex items-center justify-center transition-transform
+  ${
+    music.hasLyrics
+      ? `cursor-pointer hover:scale-105 active:scale-95 ${
+          isPlayingLyrics
+            ? "text-[#1ed760] active:text-[#159743]"
+            : "text-[#b3b3b3] hover:text-white active:text-[#7e7e7e]"
+        }`
+      : "cursor-not-allowed text-[#323232]"
+  }
+`}
               >
                 <LyricsIcon className="h-4 w-4" />
                 {isPlayingLyrics && (

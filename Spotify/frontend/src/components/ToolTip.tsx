@@ -3,9 +3,10 @@ import React, { useState, useRef, useEffect } from "react";
 type Props = {
   text: string;
   children: React.ReactNode;
+  showTooltip?: boolean;
 };
 
-const ToolTip = ({ text, children }: Props) => {
+const ToolTip = ({ text, children, showTooltip = true }: Props) => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isVisible, setIsVisible] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -47,6 +48,9 @@ const ToolTip = ({ text, children }: Props) => {
   };
 
   const handleMouseEnter = () => {
+    // Only show tooltip if showTooltip prop is true
+    if (!showTooltip) return;
+
     // Clear any existing timeout
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
@@ -83,6 +87,17 @@ const ToolTip = ({ text, children }: Props) => {
       };
     }
   }, [isVisible, text]);
+
+  // Hide tooltip when showTooltip becomes false
+  useEffect(() => {
+    if (!showTooltip && isVisible) {
+      setIsVisible(false);
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+    }
+  }, [showTooltip, isVisible]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
