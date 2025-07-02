@@ -37,6 +37,24 @@ interface PlayerContextProps {
   volumeSliderRef: React.RefObject<HTMLDivElement | null>;
   duration: number;
   music: (typeof musics)[number];
+  isSongExpanded: boolean;
+  setIsSongExpanded: React.Dispatch<React.SetStateAction<boolean>>;
+  likedSongs: string[];
+  setLikedSongs: React.Dispatch<React.SetStateAction<string[]>>;
+  isPlayingView: boolean;
+  setIsPlayingView: React.Dispatch<React.SetStateAction<boolean>>;
+  isPlayingLyrics: boolean;
+  setIsPlayingLyrics: React.Dispatch<React.SetStateAction<boolean>>;
+  isPlayingQueue: boolean;
+  setIsPlayingQueue: React.Dispatch<React.SetStateAction<boolean>>;
+  isShowingConnectedDevices: boolean;
+  setIsShowingConnectedDevices: React.Dispatch<React.SetStateAction<boolean>>;
+  isShowingMiniPlayer: boolean;
+  setIsShowingMiniPlayer: React.Dispatch<React.SetStateAction<boolean>>;
+  isShowingFullscreen: boolean;
+  setIsShowingFullscreen: React.Dispatch<React.SetStateAction<boolean>>;
+  isShowRemainingTime: boolean;
+  setIsShowRemainingTime: React.Dispatch<React.SetStateAction<boolean>>;
   isHydrated: boolean;
 }
 
@@ -83,7 +101,7 @@ function usePersistedState<T>(
 // Custom hook for persisted current time with throttling
 function usePersistedCurrentTime(): [
   number,
-  React.Dispatch<React.SetStateAction<number>>
+  React.Dispatch<React.SetStateAction<number>>,
 ] {
   const [currentTime, setCurrentTime] = usePersistedState(
     "musicPlayer_currentTime",
@@ -154,6 +172,47 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     0
   );
 
+  const [isSongExpanded, setIsSongExpanded] = usePersistedState(
+    "musicPlayer_isSongExpanded",
+    false
+  );
+
+  const [likedSongs, setLikedSongs] = usePersistedState<string[]>(
+    "musicPlayer_likedSongs",
+    []
+  );
+
+  const [isPlayingView, setIsPlayingView] = usePersistedState(
+    "musicPlayer_isPlayingView",
+    false
+  );
+
+  const [isPlayingLyrics, setIsPlayingLyrics] = usePersistedState(
+    "musicPlayer_isPlayingLyrics",
+    false
+  );
+
+  const [isPlayingQueue, setIsPlayingQueue] = usePersistedState(
+    "musicPlayer_isPlayingQueue",
+    false
+  );
+
+  const [isShowingConnectedDevices, setIsShowingConnectedDevices] =
+    usePersistedState("musicPlayer_isShowingConnectedDevices", false);
+
+  const [isShowingMiniPlayer, setIsShowingMiniPlayer] = usePersistedState(
+    "musicPlayer_isShowingMiniPlayer",
+    false
+  );
+  const [isShowingFullscreen, setIsShowingFullscreen] = usePersistedState(
+    "musicPlayer_isShowingFullscreen",
+    false
+  );
+  const [isShowRemainingTime, setIsShowRemainingTime] = usePersistedState(
+    "musicPlayer_isShowRemainingTime",
+    false
+  );
+
   const [duration, setDuration] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isVolumeDragging, setIsVolumeDragging] = useState(false);
@@ -195,7 +254,7 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [currentIndex, lastSongIndex, currentTime]);
 
-  // Stop music on page load if it was playing (optional - you might want to auto-resume)
+  // Stop music on page load if it was playing
   useEffect(() => {
     if (isMusicPlaying) {
       setIsMusicPlaying(false);
@@ -241,6 +300,24 @@ export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
     progressBarRef,
     volumeSliderRef,
     music,
+    isSongExpanded,
+    setIsSongExpanded,
+    likedSongs,
+    setLikedSongs,
+    isPlayingView,
+    setIsPlayingView,
+    isPlayingLyrics,
+    setIsPlayingLyrics,
+    isPlayingQueue,
+    setIsPlayingQueue,
+    isShowingConnectedDevices,
+    setIsShowingConnectedDevices,
+    isShowingMiniPlayer,
+    setIsShowingMiniPlayer,
+    isShowingFullscreen,
+    setIsShowingFullscreen,
+    isShowRemainingTime,
+    setIsShowRemainingTime,
     duration,
     isHydrated,
   };
